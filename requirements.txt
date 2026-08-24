@@ -1,0 +1,5 @@
+Django>=6.0.8,<6.1
+djangorestframework>=3.18,<3.19
+psycopg[binary]>=3.2,<4
+requests>=2.32,<3
+beautifulsoup4>=4.13,<5
