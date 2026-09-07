@@ -24,11 +24,31 @@ class Command(BaseCommand):
             dest="sources",
         )
 
+        parser.add_argument(
+            "--timeout",
+            type=int,
+            default=15,
+            help=(
+                "Per-source HTTP timeout in seconds "
+                "(default: 15)."
+            ),
+        )
+
     def handle(
         self,
         *args,
         **options,
     ):
+        timeout_seconds = options["timeout"]
+
+        if timeout_seconds <= 0:
+            self.stderr.write(
+                self.style.ERROR(
+                    "--timeout must be greater than 0."
+                )
+            )
+            return
+
         queryset = (
             JobSource.objects
             .filter(
@@ -44,6 +64,7 @@ class Command(BaseCommand):
 
         valid = 0
         invalid = 0
+        retryable = 0
 
         for source in queryset:
             self.stdout.write(
@@ -52,7 +73,8 @@ class Command(BaseCommand):
             )
 
             result = validate_source(
-                source
+                source,
+                timeout_seconds=timeout_seconds,
             )
 
             if result.valid:
@@ -61,6 +83,16 @@ class Command(BaseCommand):
                 self.stdout.write(
                     self.style.SUCCESS(
                         "  valid"
+                    )
+                )
+
+            elif result.retryable:
+                retryable += 1
+
+                self.stdout.write(
+                    self.style.WARNING(
+                        f"  retryable: "
+                        f"{result.error}"
                     )
                 )
 
@@ -84,4 +116,8 @@ class Command(BaseCommand):
 
         self.stdout.write(
             f"Invalid: {invalid}"
+        )
+
+        self.stdout.write(
+            f"Retryable/unknown: {retryable}"
         )
