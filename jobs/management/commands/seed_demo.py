@@ -68,6 +68,28 @@ class Command(BaseCommand):
             },
         )
 
+        profile.discovery_titles = [
+            "QA Engineer",
+            "Quality Assurance Engineer",
+            "Software Test Engineer",
+            "Test Analyst",
+            "QA Analyst",
+            "API Test Engineer",
+        ]
+
+        profile.discovery_locations = [
+            "Remote",
+            "Mozambique",
+            "South Africa",
+            "EMEA",
+        ]
+
+        profile.discovery_primary_titles = [
+            "QA Engineer",
+            "Software Test Engineer",
+        ]
+
+        profile.save()
         rules = [
             {
                 "name": "Maximum 7 years required",

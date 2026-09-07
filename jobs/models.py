@@ -8,11 +8,31 @@ class JobSource(models.Model):
         SCRAPER = "scraper", "Scraper"
         MANUAL = "manual", "Manual"
 
+    class ValidationStatus(models.TextChoices):
+        UNKNOWN = "unknown", "Unknown"
+        VALID = "valid", "Valid"
+        INVALID = "invalid", "Invalid"
+
     name = models.CharField(max_length=120, unique=True)
     kind = models.CharField(max_length=20, choices=Kind.choices)
     base_url = models.URLField(blank=True)
     enabled = models.BooleanField(default=True)
     config = models.JSONField(default=dict, blank=True)
+
+    validation_status = models.CharField(
+        max_length=20,
+        choices=ValidationStatus.choices,
+        default=ValidationStatus.UNKNOWN,
+    )
+
+    last_validated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    validation_error = models.TextField(
+        blank=True,
+    )
 
     def __str__(self):
         return self.name

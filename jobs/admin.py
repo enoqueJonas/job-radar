@@ -32,8 +32,24 @@ class SkillKeywordAdmin(admin.ModelAdmin):
 
 @admin.register(JobSource)
 class JobSourceAdmin(admin.ModelAdmin):
-    list_display = ("name", "kind", "enabled")
-    list_filter = ("kind", "enabled")
+    list_display = (
+        "name",
+        "kind",
+        "enabled",
+        "validation_status",
+        "last_validated_at",
+    )
+
+    list_filter = (
+        "kind",
+        "enabled",
+        "validation_status",
+    )
+
+    search_fields = (
+        "name",
+        "base_url",
+    )
 
 
 @admin.register(Job)

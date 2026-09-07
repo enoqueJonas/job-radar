@@ -10,6 +10,29 @@ class SearchRuleInline(admin.TabularInline):
 @admin.register(SearchProfile)
 class SearchProfileAdmin(admin.ModelAdmin):
     list_display = ("name", "slug", "active", "minimum_score", "updated_at")
+    fieldsets = (
+        (
+            "Profile",
+            {
+                "fields": (
+                    "name",
+                    "slug",
+                    "description",
+                    "active",
+                    "minimum_score",
+                )
+            },
+        ),
+        (
+            "Discovery",
+            {
+                "fields": (
+                    "discovery_titles",
+                    "discovery_locations",
+                )
+            },
+        ),
+    )
     prepopulated_fields = {"slug": ("name",)}
     inlines = [SearchRuleInline]
 

@@ -22,6 +22,11 @@ from jobs.collectors.greenhouse import (
     GreenhouseCollector,
     GreenhouseConfigurationError,
 )
+from unittest.mock import patch, Mock
+
+from jobs.source_validation import (
+    validate_source,
+)
 
 SAMPLE = {
     "id": "abc-123",
@@ -373,3 +378,87 @@ class GreenhouseCollectorTests(
                     "company": "Acme",
                 }
             )
+
+
+class SourceValidationTests(TestCase):
+    def setUp(self):
+        self.lever = (
+            JobSource.objects.create(
+                name="Acme Lever",
+                kind=JobSource.Kind.ATS,
+                enabled=False,
+                config={
+                    "provider": "lever",
+                    "site": "acme",
+                    "company": "Acme",
+                    "region": "global",
+                },
+            )
+        )
+
+    @patch(
+        "jobs.source_validation.requests.get"
+    )
+    def test_valid_lever_source_is_enabled(
+        self,
+        mock_get,
+    ):
+        response = Mock()
+        response.status_code = 200
+        response.json.return_value = []
+
+        mock_get.return_value = response
+
+        result = validate_source(
+            self.lever
+        )
+
+        self.lever.refresh_from_db()
+
+        self.assertTrue(
+            result.valid
+        )
+
+        self.assertTrue(
+            self.lever.enabled
+        )
+
+        self.assertEqual(
+            self.lever.validation_status,
+            JobSource
+            .ValidationStatus
+            .VALID,
+        )
+
+    @patch(
+        "jobs.source_validation.requests.get"
+    )
+    def test_invalid_source_is_disabled(
+        self,
+        mock_get,
+    ):
+        response = Mock()
+        response.status_code = 404
+
+        mock_get.return_value = response
+
+        result = validate_source(
+            self.lever
+        )
+
+        self.lever.refresh_from_db()
+
+        self.assertFalse(
+            result.valid
+        )
+
+        self.assertFalse(
+            self.lever.enabled
+        )
+
+        self.assertEqual(
+            self.lever.validation_status,
+            JobSource
+            .ValidationStatus
+            .INVALID,
+        )

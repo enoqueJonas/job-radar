@@ -7,6 +7,20 @@ class SearchProfile(models.Model):
     slug = models.SlugField(unique=True)
     description = models.TextField(blank=True)
     active = models.BooleanField(default=True)
+    discovery_titles = models.JSONField(
+        default=list,
+        blank=True,
+    )
+
+    discovery_primary_titles = models.JSONField(
+        default=list,
+        blank=True,
+    )
+
+    discovery_locations = models.JSONField(
+        default=list,
+        blank=True,
+    )
 
     # Minimum final percentage needed to surface a passing match.
     minimum_score = models.PositiveSmallIntegerField(default=50)
@@ -14,8 +28,9 @@ class SearchProfile(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
-        return self.name
+
+def __str__(self):
+    return self.name
 
 
 class SearchRule(models.Model):
