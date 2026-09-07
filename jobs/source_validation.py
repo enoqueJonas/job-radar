@@ -12,6 +12,7 @@ from jobs.models import JobSource
 class ValidationResult:
     valid: bool
     error: str = ""
+    retryable: bool = False
 
 
 def validate_source(
@@ -51,22 +52,25 @@ def validate_source(
         result = ValidationResult(
             valid=False,
             error=str(exc),
+            retryable=True,
         )
 
-    source.last_validated_at = (
-        timezone.now()
-    )
+    source.last_validated_at = timezone.now()
 
-    source.validation_status = (
-        JobSource.ValidationStatus.VALID
-        if result.valid
-        else JobSource.ValidationStatus.INVALID
-    )
+    if result.valid:
+        source.validation_status = (
+            JobSource.ValidationStatus.VALID
+        )
+    elif result.retryable:
+        source.validation_status = (
+            JobSource.ValidationStatus.UNKNOWN
+        )
+    else:
+        source.validation_status = (
+            JobSource.ValidationStatus.INVALID
+        )
 
-    source.validation_error = (
-        result.error
-    )
-
+    source.validation_error = result.error
     source.enabled = result.valid
 
     source.save(
@@ -79,6 +83,10 @@ def validate_source(
     )
 
     return result
+
+
+def _is_retryable_status(status_code: int) -> bool:
+    return status_code == 429 or status_code >= 500
 
 
 def _validate_lever(
@@ -130,6 +138,9 @@ def _validate_lever(
         return ValidationResult(
             False,
             f"HTTP {response.status_code}",
+            retryable=_is_retryable_status(
+                response.status_code
+            ),
         )
 
     payload = response.json()
@@ -140,9 +151,7 @@ def _validate_lever(
             "Unexpected Lever payload.",
         )
 
-    return ValidationResult(
-        True
-    )
+    return ValidationResult(True)
 
 
 def _validate_greenhouse(
@@ -185,6 +194,9 @@ def _validate_greenhouse(
         return ValidationResult(
             False,
             f"HTTP {response.status_code}",
+            retryable=_is_retryable_status(
+                response.status_code
+            ),
         )
 
     payload = response.json()
@@ -198,6 +210,4 @@ def _validate_greenhouse(
             "Unexpected Greenhouse payload.",
         )
 
-    return ValidationResult(
-        True
-    )
+    return ValidationResult(True)
